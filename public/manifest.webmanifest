@@ -1,0 +1,17 @@
+{
+  "id": "/depot",
+  "name": "Twins Depot",
+  "short_name": "Twins Depot",
+  "start_url": "/depot/dashboard",
+  "scope": "/depot/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#111827",
+  "icons": [
+    {
+      "src": "/icons/icon-144.png",
+      "sizes": "144x144",
+      "type": "image/png"
+    }
+  ]
+}

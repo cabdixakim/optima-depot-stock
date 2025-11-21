@@ -1,0 +1,17 @@
+{
+  "id": "/portal",
+  "name": "Twins Client Portal",
+  "short_name": "Twins Client",
+  "start_url": "/portal",
+  "scope": "/portal/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#111827",
+  "icons": [
+    {
+      "src": "/icons/gas-pump.png",
+      "sizes": "144x144",
+      "type": "image/png"
+    }
+  ]
+}
