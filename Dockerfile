@@ -1,19 +1,18 @@
 FROM php:8.2-cli
 
-# Install system dependencies and PHP extensions needed by Laravel
-RUN apt-get update && apt-get install -y \
-    git unzip libpq-dev libzip-dev libonig-dev libicu-dev \
-    && docker-php-ext-install pdo pdo_pgsql mbstring intl bcmath zip \
-    && rm -rf /var/lib/apt/lists/*
-
-# Set working directory
 WORKDIR /var/www/html
 
-# Copy the entire project (including vendor and public/build if you committed them)
+# Install PHP extensions you actually need (Postgres here)
+RUN apt-get update && apt-get install -y \
+    libpq-dev \
+ && docker-php-ext-install pdo pdo_pgsql
+
+# Copy everything (including vendor) into the container
 COPY . .
 
-# Render expects the app to listen on this port
-ENV PORT=10000
+# Permissions for Laravel
+RUN chmod -R 775 storage bootstrap/cache
 
-# Start Laravel's built-in server
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=10000"]
+EXPOSE 8000
+
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
