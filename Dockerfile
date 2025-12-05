@@ -1,32 +1,43 @@
-# ---- Base image ----
+# -------------------------------------------------
+# Base PHP image
+# -------------------------------------------------
 FROM php:8.2-cli
 
-# Install system dependencies and PHP extensions
+# Install system packages and PHP extensions needed by Laravel
 RUN apt-get update && apt-get install -y \
     git unzip libpq-dev libzip-dev libonig-dev libicu-dev \
     && docker-php-ext-install pdo pdo_pgsql mbstring intl bcmath zip \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Composer
+# Allow Composer to run as root inside the container
+ENV COMPOSER_ALLOW_SUPERUSER=1
+
+# Install Composer (from official image)
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy all project files
+# -------------------------------------------------
+# Install PHP dependencies WITHOUT running scripts
+# (avoids php artisan hooks failing during build)
+# -------------------------------------------------
+
+# Copy only composer files first (for better Docker caching)
+COPY composer.json composer.lock ./
+
+RUN composer install \
+    --no-dev \
+    --no-interaction \
+    --prefer-dist \
+    --no-scripts \
+    --ignore-platform-reqs
+
+# Now copy the rest of the application code
 COPY . .
 
-# Install PHP dependencies (Composer)
-# --ignore-platform-reqs avoids failing on minor extension version differences
-RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --ignore-platform-reqs
-
-# Cache config/routes/views (ignore first-run failures)
-RUN php artisan config:cache || true \
- && php artisan route:cache || true \
- && php artisan view:cache || true
-
-# Port Render expects
+# Expose the port Render expects
 ENV PORT=10000
 
-# Start Laravel server
+# Default command: start Laravel development server
 CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=10000"]
