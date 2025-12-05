@@ -1,3 +1,5 @@
+// resources/js/app.js
+
 import "./bootstrap";
 
 // --- Tabulator (full bundle includes all modules) ---
@@ -14,3 +16,4 @@ import * as XLSX from "xlsx";
 window.jspdf = { jsPDF };   // Tabulator will look for window.jspdf.jsPDF
 window.jsPDF = jsPDF;       // optional convenience
 window.XLSX = XLSX;         // XLSX export
+

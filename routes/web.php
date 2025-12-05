@@ -1,12 +1,11 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 
-Route::view('/', 'welcome');
-
-Route::view('dashboard', 'dashboard')
-    ->middleware(['auth', 'verified'])
-    ->name('dashboard');
+Route::get('/', function () {
+    return redirect()->route('login');
+});
 
 Route::view('profile', 'profile')
     ->middleware(['auth'])
@@ -14,8 +13,41 @@ Route::view('profile', 'profile')
 
 require __DIR__.'/auth.php';
 
-// 
-// Make Laravel's default "dashboard" route redirect to your package dashboard
-Route::get('/dashboard', fn () => redirect()->route('depot.dashboard'))
-    ->middleware(['auth'])
-    ->name('dashboard');
+// Custom dashboard redirect
+Route::get('/dashboard', function () {
+    $user = Auth::user();
+
+    if (!$user) {
+        return redirect()->route('login');
+    }
+
+    // Normalise role names to lowercase
+    $roles = $user->roles->pluck('name')
+        ->map(fn ($r) => strtolower($r))
+        ->all();
+
+    // ----- 1) Pure CLIENT → client portal -----
+    $hasClient      = in_array('client', $roles, true);
+    $nonClientRoles = array_diff($roles, ['client']);
+    $isClientOnly   = $hasClient && count($nonClientRoles) === 0;
+
+    if ($isClientOnly && $user->client_id) {
+        return redirect()->route('portal.home');
+    }
+
+    // ----- 2) Pure OPERATIONS → depot operations dashboard -----
+    // We treat "operations" or "ops" as ops roles
+    $opsRoleNames = ['operations', 'ops'];
+
+    $hasOps = count(array_intersect($roles, $opsRoleNames)) > 0;
+    $nonOpsRoles = array_diff($roles, $opsRoleNames);
+    $isOpsOnly = $hasOps && count($nonOpsRoles) === 0;
+
+    if ($isOpsOnly) {
+        // This is the route we built for the ops dashboard
+        return redirect()->route('depot.operations.index');
+    }
+
+    // ----- 3) Everyone else (admin, accounts, mixed roles, etc.) → main depot dashboard -----
+    return redirect()->route('depot.dashboard');
+})->middleware(['auth'])->name('dashboard');
