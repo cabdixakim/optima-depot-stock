@@ -1,10 +1,10 @@
 # ---- Base image ----
 FROM php:8.2-cli
 
-# Install system dependencies (NO nodejs here)
+# Install system dependencies and PHP extensions
 RUN apt-get update && apt-get install -y \
-    git unzip libpq-dev libzip-dev libonig-dev \
-    && docker-php-ext-install pdo pdo_pgsql zip \
+    git unzip libpq-dev libzip-dev libonig-dev libicu-dev \
+    && docker-php-ext-install pdo pdo_pgsql mbstring intl bcmath zip \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Composer
@@ -16,15 +16,16 @@ WORKDIR /var/www/html
 # Copy all project files
 COPY . .
 
-# Install PHP dependencies only (frontend already built & committed)
-RUN composer install --no-dev --optimize-autoloader
+# Install PHP dependencies (Composer)
+# --ignore-platform-reqs avoids failing on minor extension version differences
+RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --ignore-platform-reqs
 
 # Cache config/routes/views (ignore first-run failures)
 RUN php artisan config:cache || true \
  && php artisan route:cache || true \
  && php artisan view:cache || true
 
-# Render port
+# Port Render expects
 ENV PORT=10000
 
 # Start Laravel server
