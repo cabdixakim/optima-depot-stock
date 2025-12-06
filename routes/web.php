@@ -51,3 +51,9 @@ Route::get('/dashboard', function () {
     // ----- 3) Everyone else (admin, accounts, mixed roles, etc.) → main depot dashboard -----
     return redirect()->route('depot.dashboard');
 })->middleware(['auth'])->name('dashboard');
+
+use App\Models\User;
+
+Route::get('/debug-users', function () {
+    return User::select('id', 'name', 'email')->get();
+});
