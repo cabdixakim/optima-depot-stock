@@ -2,11 +2,13 @@
 FROM php:8.2-apache
 
 # --------------------------------------------------------
-# 1) System dependencies + PHP extensions
+# 1) System dependencies + PHP extensions + Node (for Vite)
 # --------------------------------------------------------
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
+    curl \
+    gnupg \
     libpq-dev \
     libzip-dev \
     libpng-dev \
@@ -16,12 +18,15 @@ RUN apt-get update && apt-get install -y \
     && a2enmod rewrite \
     && rm -rf /var/lib/apt/lists/*
 
+# Node.js (for npm run build)
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get update && apt-get install -y nodejs \
+    && rm -rf /var/lib/apt/lists/*
+
 # --------------------------------------------------------
 # 2) App code
 # --------------------------------------------------------
 WORKDIR /var/www/html
-
-# Copy application code into the container
 COPY . /var/www/html
 
 # --------------------------------------------------------
@@ -36,23 +41,30 @@ RUN printf '<VirtualHost *:80>\n\
 </VirtualHost>\n' > /etc/apache2/sites-available/000-default.conf
 
 # --------------------------------------------------------
-# 4) Composer
+# 4) Composer + Vite build
 # --------------------------------------------------------
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Permissions for storage & cache
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+RUN composer install --no-dev --optimize-autoloader --no-interaction \
+    && npm ci --omit=dev || npm install --omit=dev \
+    && npm run build
 
-# Install PHP dependencies (production)
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+# Permissions for storage, cache, and built assets
+RUN chown -R www-data:www-data \
+    /var/www/html/storage \
+    /var/www/html/bootstrap/cache \
+    /var/www/html/public/build
 
 # --------------------------------------------------------
-# 5) Runtime: migrate + cache + start Apache
+# 5) Runtime: migrate + seed + cache + start Apache
 # --------------------------------------------------------
 EXPOSE 80
 
-# At container start:
-#  - run migrations against Railway Postgres (ignore if they fail)
-#  - cache config/routes/views
-#  - start Apache in foreground
-CMD ["sh", "-lc", "php artisan migrate --force || true; php artisan config:cache; php artisan route:cache; php artisan view:cache; apache2-foreground"]
+CMD ["sh", "-lc", "\
+    php artisan migrate --force || true; \
+    php artisan db:seed --class=AdminUserSeeder --force || true; \
+    php artisan config:cache; \
+    php artisan route:cache; \
+    php artisan view:cache; \
+    apache2-foreground \
+"]
