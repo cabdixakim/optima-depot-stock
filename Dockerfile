@@ -41,13 +41,13 @@ RUN printf '<VirtualHost *:80>\n\
 </VirtualHost>\n' > /etc/apache2/sites-available/000-default.conf
 
 # --------------------------------------------------------
-# 4) Composer + Vite build
+# 4) Composer install (ignore platform requirements) + Vite build
 # --------------------------------------------------------
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-RUN composer install --no-dev --optimize-autoloader --no-interaction \
-    && npm ci --omit=dev || npm install --omit=dev \
-    && npm run build
+RUN composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-reqs
+
+RUN npm install --omit=dev && npm run build
 
 # Permissions for storage, cache, and built assets
 RUN chown -R www-data:www-data \
