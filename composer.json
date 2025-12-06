@@ -15,7 +15,7 @@
         "minishlink/web-push": "7.0"
     },
      "repositories": [
-    { "type": "path", "url": "C:/Laravel_Packages/optima_depot_stock" }
+    { "type": "vcs", "url": "https://github.com/cabdixakim/Depot-stock-package.git" }
     ],
      "require": {
             "php": "^8.2",
@@ -23,7 +23,7 @@
             "laravel/tinker": "^2.10.1",
             "livewire/livewire": "^3.6.4",
             "livewire/volt": "^1.7.0",
-            "optima/depot-stock": "^1.0"
+            "optima/depot-stock": "dev-main"
         },
     "require-dev": {
         "fakerphp/faker": "^1.23",
