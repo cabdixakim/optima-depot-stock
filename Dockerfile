@@ -40,7 +40,7 @@ RUN printf '<VirtualHost *:80>\n\
 
 # -------------------------------
 # 4) Composer install
-#    (assets are already built: public/build committed from local)
+#    (assets already built locally: public/build committed)
 # -------------------------------
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
@@ -49,12 +49,11 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction --ignore-pl
 # -------------------------------
 # 5) Permissions for storage, cache, logs
 # -------------------------------
-# Make sure storage/logs exists, then give www-data ownership + rwx
 RUN mkdir -p /var/www/html/storage/logs && \
     chown -R www-data:www-data \
         /var/www/html/storage \
         /var/www/html/bootstrap/cache && \
-    chmod -R ug+rwx \
+    chmod -R 777 \
         /var/www/html/storage \
         /var/www/html/bootstrap/cache
 
