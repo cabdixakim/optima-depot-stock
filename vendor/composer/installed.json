@@ -3494,12 +3494,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/cabdixakim/Depot-stock-package.git",
-                "reference": "ce950904c98039c3b9a601e8337aaa0f2ea103e5"
+                "reference": "765749d4c0c51d63b938450e2405462dd111bc45"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/cabdixakim/Depot-stock-package/zipball/ce950904c98039c3b9a601e8337aaa0f2ea103e5",
-                "reference": "ce950904c98039c3b9a601e8337aaa0f2ea103e5",
+                "url": "https://api.github.com/repos/cabdixakim/Depot-stock-package/zipball/765749d4c0c51d63b938450e2405462dd111bc45",
+                "reference": "765749d4c0c51d63b938450e2405462dd111bc45",
                 "shasum": ""
             },
             "require": {
@@ -3510,7 +3510,7 @@
                 "livewire/livewire": "^3.0",
                 "php": ">=8.2"
             },
-            "time": "2025-12-06T21:09:57+00:00",
+            "time": "2025-12-06T21:52:20+00:00",
             "default-branch": true,
             "type": "library",
             "extra": {
