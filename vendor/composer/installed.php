@@ -3,7 +3,7 @@
         'name' => 'laravel/laravel',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => 'b8b39a2ee35697a5e503c1688ec7c496eb0352f8',
+        'reference' => 'f10c9da1847673244ff3ee867764090a12d5a66f',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -403,7 +403,7 @@
         'laravel/laravel' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => 'b8b39a2ee35697a5e503c1688ec7c496eb0352f8',
+            'reference' => 'f10c9da1847673244ff3ee867764090a12d5a66f',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
@@ -634,7 +634,7 @@
         'optima/depot-stock' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '53101bb2386a8cff3b20abbc9428cc000718e60c',
+            'reference' => '1db0b8e9d3892844dbaf4567c5737b35c5dfadc2',
             'type' => 'library',
             'install_path' => __DIR__ . '/../optima/depot-stock',
             'aliases' => array(
