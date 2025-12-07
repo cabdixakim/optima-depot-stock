@@ -2676,12 +2676,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/cabdixakim/Depot-stock-package.git",
-                "reference": "d6a64e894bccd4b74cd13738e9392df5a50ce808"
+                "reference": "f575756e91aef1eed0cbc7ff4ecf26b817b6f1f6"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/cabdixakim/Depot-stock-package/zipball/d6a64e894bccd4b74cd13738e9392df5a50ce808",
-                "reference": "d6a64e894bccd4b74cd13738e9392df5a50ce808",
+                "url": "https://api.github.com/repos/cabdixakim/Depot-stock-package/zipball/f575756e91aef1eed0cbc7ff4ecf26b817b6f1f6",
+                "reference": "f575756e91aef1eed0cbc7ff4ecf26b817b6f1f6",
                 "shasum": ""
             },
             "require": {
@@ -2714,7 +2714,7 @@
                 "source": "https://github.com/cabdixakim/Depot-stock-package/tree/main",
                 "issues": "https://github.com/cabdixakim/Depot-stock-package/issues"
             },
-            "time": "2025-12-07T03:48:15+00:00"
+            "time": "2025-12-07T03:50:33+00:00"
         },
         {
             "name": "phpoption/phpoption",
