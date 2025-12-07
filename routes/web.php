@@ -70,11 +70,3 @@ Route::get('/debug-make-admin', function () {
     return $user;
 });
 
-// remember to remove this route in production!
-
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Artisan;
-
-Route::get('/debug-migrations', function () {
-    return DB::table('migrations')->orderBy('id')->pluck('migration');
-});
