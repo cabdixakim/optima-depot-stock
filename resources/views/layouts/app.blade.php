@@ -12,7 +12,15 @@
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
         <!-- Scripts -->
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
+          {{-- CSS --}}
+  <!-- Tailwind CDN – bypass Vite completely -->
+<script src="https://cdn.tailwindcss.com"></script>
+       
+        <!-- Vite CSS :::  remember to uncomment it-->
+       <!-- @vite(['resources/css/app.css']) -->
+
+        <!-- Vite JS -->
+        @vite(['resources/js/app.js'])
     </head>
     <body class="font-sans antialiased">
         <div class="min-h-screen bg-gray-100 dark:bg-gray-900">
