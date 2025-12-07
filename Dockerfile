@@ -18,7 +18,7 @@ RUN apt-get update && apt-get install -y \
     && a2enmod rewrite \
     && rm -rf /var/lib/apt/lists/*
 
-# Optional: silence Apache "ServerName" warning
+# Silence Apache ServerName warning
 RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
 
 # -------------------------------
@@ -28,7 +28,7 @@ WORKDIR /var/www/html
 COPY . /var/www/html
 
 # -------------------------------
-# 3) Apache vhost -> /public
+# 3) Apache VHOST -> /public
 # -------------------------------
 RUN printf '<VirtualHost *:80>\n\
     DocumentRoot /var/www/html/public\n\
@@ -40,14 +40,13 @@ RUN printf '<VirtualHost *:80>\n\
 
 # -------------------------------
 # 4) Composer install
-#    (assets already built locally: public/build committed)
 # -------------------------------
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 RUN composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-reqs
 
 # -------------------------------
-# 5) Permissions for storage, cache, logs
+# 5) Permissions
 # -------------------------------
 RUN mkdir -p /var/www/html/storage/logs && \
     chown -R www-data:www-data \
@@ -58,14 +57,14 @@ RUN mkdir -p /var/www/html/storage/logs && \
         /var/www/html/bootstrap/cache
 
 # -------------------------------
-# 6) Expose + runtime command
+# 6) Expose + Temporary Runtime
 # -------------------------------
 EXPOSE 80
 
+# 🔥 TEMPORARY CMD — rebuild full schema clean
 CMD ["sh", "-lc", "\
-    php artisan migrate --force || true; \
+    php artisan migrate:fresh --force --seed || true; \
     php artisan config:cache; \
-    php artisan route:cache; \
     php artisan view:cache; \
     apache2-foreground \
 "]
