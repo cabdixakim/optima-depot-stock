@@ -16,6 +16,8 @@
     $policyAction = \Illuminate\Support\Facades\Route::has('depot.policies.save')
         ? route('depot.policies.save')
         : request()->url();
+
+    // products already passed from controller as $products
 @endphp
 
 <div class="max-w-5xl mx-auto space-y-6">
@@ -29,6 +31,13 @@
       </p>
     </div>
     <div class="flex items-center gap-2">
+
+      {{-- ✅ PATCH: Products button --}}
+      <button id="btnProducts"
+              class="rounded-xl border border-gray-200 bg-white/80 text-gray-700 px-3 py-2 text-xs font-medium hover:bg-gray-100 hover:border-gray-300 shadow-sm">
+        📦 Products
+      </button>
+
       <button id="btnDepotPolicies"
               class="rounded-xl border border-gray-200 bg-white/80 text-gray-700 px-3 py-2 text-xs font-medium hover:bg-gray-100 hover:border-gray-300 shadow-sm">
         ⚙ Depot policies
@@ -171,6 +180,83 @@
         </div>
       </div>
     @endforelse
+  </div>
+</div>
+
+{{-- ✅ PATCH: Products Modal --}}
+<div id="productModal" class="fixed inset-0 z-[135] hidden">
+  <button type="button" class="absolute inset-0 bg-black/40" data-close-products></button>
+  <div class="absolute inset-0 flex items-start justify-center p-4 md:p-8 overflow-y-auto">
+    <div class="w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-gray-100 mt-8">
+      <div class="flex items-center justify-between border-b px-5 py-3 bg-gray-50 rounded-t-2xl">
+        <div>
+          <div class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Products</div>
+          <div class="text-sm font-semibold text-gray-900">Create once · reuse in tanks</div>
+        </div>
+        <button type="button" class="text-gray-500 hover:text-gray-800" data-close-products>✕</button>
+      </div>
+
+      <div class="p-5 space-y-4">
+        <form id="productForm" action="{{ route('depot.products.store') }}" method="POST" class="space-y-2">
+          @csrf
+          <label class="block text-xs text-gray-500">New product name</label>
+
+          <div class="flex items-center gap-2">
+            <input id="productNameInput"
+                   type="text"
+                   name="name"
+                   required
+                   class="flex-1 rounded-xl border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                   placeholder="e.g. AGO, PMS, JET A1">
+            <button id="productSubmitBtn"
+                    type="submit"
+                    class="inline-flex items-center gap-1 rounded-xl bg-gray-900 text-white px-3 py-2 text-sm hover:bg-black shadow">
+              + Add
+            </button>
+          </div>
+
+          <p class="text-[11px] text-gray-400">
+            Density is defaulted at 0.82  
+          </p>
+
+          <div id="productError" class="hidden text-xs text-rose-700 bg-rose-50 border border-rose-100 rounded-lg px-3 py-2"></div>
+          <div id="productHint" class="hidden text-xs text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2"></div>
+        </form>
+
+        <div class="border-t pt-4">
+          <div class="flex items-center justify-between">
+            <h4 class="text-sm font-semibold text-gray-800">Existing products</h4>
+            <div id="productCount" class="text-xs text-gray-500">{{ $products->count() }} total</div>
+          </div>
+
+          <div id="productList" class="mt-3 divide-y divide-gray-100 rounded-xl border border-gray-100 overflow-hidden bg-white/80">
+            @forelse($products as $p)
+              <div class="flex items-center justify-between px-4 py-3 text-sm">
+                <div class="flex items-center gap-2">
+                  <div class="h-7 w-7 rounded-full bg-indigo-50 text-indigo-700 flex items-center justify-center text-xs font-semibold">
+                    {{ strtoupper(substr($p->name,0,1)) }}
+                  </div>
+                  <div class="font-medium text-gray-900">{{ $p->name }}</div>
+                </div>
+                <div class="text-xs text-gray-400">#{{ $p->id }}</div>
+              </div>
+            @empty
+              <div class="px-4 py-4 text-sm text-gray-500">
+                No products yet.
+              </div>
+            @endforelse
+          </div>
+
+          <div class="flex justify-end pt-4">
+            <button type="button"
+                    class="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700"
+                    data-close-products>
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -463,23 +549,24 @@
               Above this, Client Risk marks the client as <strong>Attention needed</strong> for uncleared stock.
             </span>
           </label>
+
           {{-- Default dip litres per cm --}}
-      <label class="space-y-1">
-        <span class="block text-[11px] uppercase tracking-wide text-gray-500">
-          Default dip volume per cm (L/cm)
-        </span>
-        <input
-          type="number"
-          step="0.001"
-          min="0"
-          name="default_dip_litres_per_cm"
-          value="{{ old('default_dip_litres_per_cm', \Optima\DepotStock\Models\DepotPolicy::getNumeric('default_dip_litres_per_cm', 350)) }}"
-          class="w-full rounded-xl border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          placeholder="350">
-        <span class="block text-[11px] text-gray-400">
-          Fallback used when no strapping chart is attached to the tank. Example: <code>350</code> means 350&nbsp;L per cm of dip height.
-        </span>
-      </label>
+          <label class="space-y-1">
+            <span class="block text-[11px] uppercase tracking-wide text-gray-500">
+              Default dip volume per cm (L/cm)
+            </span>
+            <input
+              type="number"
+              step="0.001"
+              min="0"
+              name="default_dip_litres_per_cm"
+              value="{{ old('default_dip_litres_per_cm', \Optima\DepotStock\Models\DepotPolicy::getNumeric('default_dip_litres_per_cm', 350)) }}"
+              class="w-full rounded-xl border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              placeholder="350">
+            <span class="block text-[11px] text-gray-400">
+              Fallback used when no strapping chart is attached to the tank. Example: <code>350</code> means 350&nbsp;L per cm of dip height.
+            </span>
+          </label>
         </div>
 
         <div class="flex justify-end gap-2 pt-3 border-t border-gray-100">
@@ -503,6 +590,132 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+
+  // ✅ PATCH: Products modal
+  const productModal   = document.getElementById('productModal');
+  const btnProducts    = document.getElementById('btnProducts');
+  const productForm    = document.getElementById('productForm');
+  const productName    = document.getElementById('productNameInput');
+  const productError   = document.getElementById('productError');
+  const productHint    = document.getElementById('productHint');
+  const productList    = document.getElementById('productList');
+  const productCount   = document.getElementById('productCount');
+  const productBtn     = document.getElementById('productSubmitBtn');
+
+  const csrf = @json(csrf_token());
+
+  function openProductModal(){ productModal?.classList.remove('hidden'); }
+  function closeProductModal(){ productModal?.classList.add('hidden'); }
+
+  function showProductError(msg){
+    if (!productError) return;
+    productError.textContent = msg || 'Failed to add product.';
+    productError.classList.remove('hidden');
+    productHint?.classList.add('hidden');
+  }
+  function showProductHint(msg){
+    if (!productHint) return;
+    productHint.textContent = msg || '';
+    productHint.classList.remove('hidden');
+    productError?.classList.add('hidden');
+  }
+  function clearProductMessages(){
+    productError?.classList.add('hidden');
+    productHint?.classList.add('hidden');
+  }
+
+  function currentProductTotal(){
+    // count rows that look like product rows (exclude "No products yet.")
+    const rows = productList?.querySelectorAll('[data-product-row]');
+    return rows ? rows.length : 0;
+  }
+
+  function addProductRow(id, name){
+    // remove "No products yet." block if present
+    const empty = productList?.querySelector('[data-product-empty]');
+    if (empty) empty.remove();
+
+    const firstLetter = (name || '?').trim().toUpperCase().slice(0,1);
+
+    const row = document.createElement('div');
+    row.setAttribute('data-product-row', '1');
+    row.className = 'flex items-center justify-between px-4 py-3 text-sm';
+    row.innerHTML = `
+      <div class="flex items-center gap-2">
+        <div class="h-7 w-7 rounded-full bg-indigo-50 text-indigo-700 flex items-center justify-center text-xs font-semibold">${firstLetter}</div>
+        <div class="font-medium text-gray-900"></div>
+      </div>
+      <div class="text-xs text-gray-400">#${id}</div>
+    `;
+    row.querySelector('.font-medium').textContent = name;
+
+    productList?.prepend(row);
+
+    const total = currentProductTotal();
+    if (productCount) productCount.textContent = `${total} total`;
+  }
+
+  btnProducts?.addEventListener('click', () => {
+    clearProductMessages();
+    openProductModal();
+    setTimeout(() => productName?.focus(), 50);
+  });
+
+  productModal?.querySelectorAll('[data-close-products]').forEach(b => {
+    b.addEventListener('click', closeProductModal);
+  });
+
+  productForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    clearProductMessages();
+
+    const raw = (productName?.value || '').trim();
+    if (!raw) {
+      showProductError('Please enter a product name.');
+      return;
+    }
+
+    const prevText = productBtn?.textContent || '+ Add';
+    if (productBtn) { productBtn.disabled = true; productBtn.textContent = 'Adding...'; }
+
+    try {
+      const fd = new FormData();
+      fd.set('name', raw);
+
+      const res = await fetch(productForm.action, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'X-CSRF-TOKEN': csrf
+        },
+        body: fd
+      });
+
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok || !data || !data.ok) {
+        const msg = (data && (data.message || (data.errors && data.errors.name && data.errors.name[0])))
+          ? (data.message || data.errors.name[0])
+          : 'Failed to add product.';
+        showProductError(msg);
+        return;
+      }
+
+      // success
+      addProductRow(data.product.id, data.product.name);
+      productName.value = '';
+      showProductHint('Product added.');
+      productName.focus();
+
+      // NOTE: I am NOT touching your tanks UI here.
+      // You can later refresh product selects when opening tanks modal if you want.
+    } catch (err) {
+      showProductError('Failed to add product.');
+    } finally {
+      if (productBtn) { productBtn.disabled = false; productBtn.textContent = prevText; }
+    }
+  });
+
   // ----- Depot modal -----
   const depotModal = document.getElementById('depotModal');
   const depotForm  = document.getElementById('depotForm');

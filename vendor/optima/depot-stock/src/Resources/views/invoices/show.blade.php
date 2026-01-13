@@ -115,6 +115,14 @@
           Apply Credit
         </button>
       @endif
+
+      {{-- CREDIT NOTE (allowed even when settled/paid) --}}
+      @if($isSettled)
+        <button id="btnCreditNote"
+                class="px-3 py-2 rounded-lg bg-rose-600 text-white hover:bg-rose-700 text-sm shadow-sm">
+          Add Credit Note
+        </button>
+      @endif
     </div>
   </div>
 
@@ -452,6 +460,55 @@
   </div>
 </div>
 @endif
+
+{{-- CREDIT NOTE MODAL --}}
+@if($isSettled)
+<div id="creditNoteModal" class="fixed inset-0 z-[120] hidden">
+  <button type="button" class="absolute inset-0 bg-black/40 backdrop-blur-sm" data-cn-close></button>
+  <div class="absolute inset-0 flex items-start justify-center p-4 md:p-8 overflow-y-auto">
+    <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-rose-100/80">
+      <div class="flex items-center justify-between border-b px-5 py-3 bg-rose-50/70 rounded-t-2xl">
+        <div>
+          <h3 class="font-semibold text-gray-900 text-sm">Add Credit Note</h3>
+          <p class="text-[11px] text-rose-800/80 mt-0.5">
+            This creates client wallet credit without editing the invoice.
+          </p>
+        </div>
+        <button type="button" class="text-gray-400 hover:text-gray-700" data-cn-close>✕</button>
+      </div>
+
+      <form id="creditNoteForm" class="p-5 space-y-4"
+            action="{{ route('depot.invoices.credit-notes.store', $invoice) }}" method="POST">
+        @csrf
+
+        <div>
+          <label class="text-xs text-gray-500">Amount (USD)</label>
+          <input id="cnAmount" type="number" step="0.01" name="amount" required
+                 class="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-rose-500 focus:outline-none"
+                 placeholder="0.00">
+        </div>
+
+        <div>
+          <label class="text-xs text-gray-500">Reason</label>
+          <input type="text" name="reason" required
+                 class="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-rose-500 focus:outline-none"
+                 placeholder="e.g. Wrongly billed offload correction">
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2 border-t border-gray-100 mt-1">
+          <button type="button" class="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm" data-cn-close>
+            Cancel
+          </button>
+          <button id="cnSubmit" type="submit"
+                  class="px-4 py-2 rounded-lg bg-rose-600 text-white hover:bg-rose-700 shadow text-sm">
+            Save Credit Note
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+@endif
 @endsection
 
 @push('styles')
@@ -503,6 +560,28 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+
+  // --- CREDIT NOTE BUTTON (bind early; survive other JS errors) ---
+  try {
+    const btn = document.getElementById('btnCreditNote');
+    const modal = document.getElementById('creditNoteModal');
+
+    if (btn && modal) {
+      const closeEls = modal.querySelectorAll('[data-cn-close]');
+      const open = () => modal.classList.remove('hidden');
+      const close = () => modal.classList.add('hidden');
+
+      btn.addEventListener('click', open);
+      closeEls.forEach(el => el.addEventListener('click', close));
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !modal.classList.contains('hidden')) close();
+      });
+    }
+  } catch (e) {
+    console.error('Credit note bind failed', e);
+  }
+  // --- DATA FROM BACKEND ---
   const invoiceBalance = {{ json_encode(max(0, $balance)) }};
   const offloadData    = @json($offloadRows);
 
@@ -724,6 +803,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     return { open, close };
   }
+
 
   // --- RECORD PAYMENT MODAL + full-pay helper ---
   const rpmRoot    = document.getElementById('recordPaymentModal');

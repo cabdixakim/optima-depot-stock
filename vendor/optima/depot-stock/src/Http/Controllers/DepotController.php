@@ -109,6 +109,45 @@ class DepotController extends Controller
     }
 
     /**
+     * Create a product quickly (name only).
+     * Default density is assigned in backend (no UI field).
+     *
+     * NOTE: register route name `depot.products.store` pointing here.
+     */
+    public function storeProduct(Request $r)
+    {
+        $data = $r->validate([
+            'name' => ['required', 'string', 'max:255', Rule::unique('products', 'name')],
+        ]);
+
+        $name = trim($data['name']);
+
+        // Backend default density (safe fallback)
+        // If you later want this configurable, you can move it to DepotPolicy or config.
+        $defaultDensity = 0.820;
+
+        $product = Product::create([
+            'name'            => $name,
+            'default_density' => $defaultDensity,
+        ]);
+
+        // JSON for fetch() calls
+        if ($r->expectsJson()) {
+            return response()->json([
+                'ok'      => true,
+                'product' => [
+                    'id'   => $product->id,
+                    'name' => $product->name,
+                ],
+            ]);
+        }
+
+        return redirect()
+            ->back()
+            ->with('status', 'Product created.');
+    }
+
+    /**
      * Save global depot policies (allowance rate, idle days, risk thresholds, dip L/cm).
      * Uses depot_policies table with `code`, `name`, `value_numeric`.
      */

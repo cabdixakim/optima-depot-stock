@@ -91,7 +91,12 @@ Route::middleware(['web', 'auth'])
                 '/invoices/{invoice}/apply-credit',
                 [InvoiceController::class, 'applyCredit']
             )->name('invoices.apply_credit');
-
+            // Store credit note
+                Route::post(
+                '/invoices/{invoice}/credit-notes',
+                [ClientCreditController::class, 'storeCreditNote']
+            )->name('invoices.credit-notes.store');
+            
             // ---------------- Payments (global) ----------------
             Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
             Route::post('/payments',[PaymentController::class, 'store'])->name('payments.store');
@@ -180,7 +185,10 @@ Route::middleware(['web', 'auth'])
             Route::post('/settings/users/{user}/roles', [UserController::class, 'updateRoles'])->name('settings.users.roles');
             Route::post('/settings/users/{user}/reset', [UserController::class, 'resetPassword'])->name('settings.users.reset');
             Route::post('/settings/users/{user}/basic', [UserController::class, 'updateBasic'])->name('settings.users.basic');
-
+           
+            // ---------------- Products ----------------
+            Route::post('/products', [DepotController::class, 'storeProduct'])
+                ->name('products.store');
             // ---------------- Depot policies (global settings) ----------------
             Route::post('/settings/depot-policies', [DepotController::class, 'savePolicies'])
                 ->name('policies.save');
