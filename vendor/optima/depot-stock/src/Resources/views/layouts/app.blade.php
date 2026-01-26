@@ -10,10 +10,10 @@
 
   {{-- CSS --}}
   <!-- Tailwind CDN – bypass Vite completely -->
-<script src="https://cdn.tailwindcss.com"></script>
+<!-- <script src="https://cdn.tailwindcss.com"></script> -->
   
 <!-- remember to uncomment this during production -->
-<!-- @vite(['resources/css/app.css']) -->
+@vite(['resources/css/app.css'])
 
   {{-- Livewire styles (if you use them) --}}
   @livewireStyles
@@ -29,11 +29,13 @@
     $u = auth()->user();
     $roleNames = $u?->roles?->pluck('name')->map(fn ($r) => strtolower($r))->all() ?? [];
 
-    $isAdmin     = in_array('admin', $roleNames) || in_array('owner', $roleNames) || in_array('superadmin', $roleNames);
-    $isOps       = in_array('operations', $roleNames) || in_array('ops', $roleNames);
-    $isAccounts  = in_array('accounts', $roleNames) || in_array('accounting', $roleNames);
+    $isAdmin      = in_array('admin', $roleNames) || in_array('owner', $roleNames) || in_array('superadmin', $roleNames);
+    $isOps        = in_array('operations', $roleNames) || in_array('ops', $roleNames);
+    $isAccounts   = in_array('accounts', $roleNames) || in_array('accounting', $roleNames);
+    $isCompliance = in_array('compliance', $roleNames);
 
-    $isPureOps   = $isOps && ! $isAdmin && ! $isAccounts;
+    $isPureOps        = $isOps && ! $isAdmin && ! $isAccounts && ! $isCompliance;
+    $isPureCompliance = $isCompliance && ! $isAdmin && ! $isAccounts && ! $isOps;
   @endphp
 
   @php
@@ -53,8 +55,8 @@
 
   {{-- Top Bar --}}
   <header class="sticky top-0 z-40 bg-white/80 backdrop-blur border-b border-gray-100">
-    <div class="mx-auto max-w-7xl px-4 md:px-6 h-14 flex items-center justify-between">
-      <div class="flex items-center gap-3">
+    <div class="mx-auto max-w-7xl px-4 md:px-6 h-14 flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3 min-w-0">
         {{-- Mobile menu toggle (left) --}}
         <button
           id="mobileNavToggle"
@@ -66,64 +68,76 @@
           </svg>
         </button>
 
-        {{-- Brand: centred on mobile, normal on md+ --}}
-        @if($isPureOps)
-          <span
-            class="inline-flex items-center gap-2 font-semibold text-gray-900 flex-1 justify-center md:flex-none md:justify-start"
-          >
-            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M3 11h4v10H3zM9 3h4v18H9zM15 7h4v14h-4z"/>
-            </svg>
-            Depot Stock
-          </span>
-        @else
-          <a href="{{ route('depot.dashboard') }}"
-             class="inline-flex items-center gap-2 font-semibold text-gray-900 flex-1 justify-center md:flex-none md:justify-start">
-            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M3 11h4v10H3zM9 3h4v18H9zM15 7h4v14h-4z"/>
-            </svg>
-            Depot Stock
-          </a>
+      {{-- Brand: centred on mobile, normal on md+ --}}
+      @if($isPureOps)
+        <span class="inline-flex items-center gap-2 font-semibold text-gray-900 flex-1 justify-center md:flex-none md:justify-start">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M3 11h4v10H3zM9 3h4v18H9zM15 7h4v14h-4z"/>
+          </svg>
+          Depot Stock
+        </span>
+
+      @elseif($isPureCompliance)
+        <a href="{{ route('depot.compliance.clearances.index') }}"
+          class="inline-flex items-center gap-2 font-semibold text-gray-900 flex-1 justify-center md:flex-none md:justify-start">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M3 11h4v10H3zM9 3h4v18H9zM15 7h4v14h-4z"/>
+          </svg>
+          Depot Stock
+        </a>
+
+      @else
+        <a href="{{ route('depot.dashboard') }}"
+          class="inline-flex items-center gap-2 font-semibold text-gray-900 flex-1 justify-center md:flex-none md:justify-start">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M3 11h4v10H3zM9 3h4v18H9zM15 7h4v14h-4z"/>
+          </svg>
+          Depot Stock
+        </a>
+      @endif
+
+  <nav class="hidden md:flex items-center gap-1 min-w-0 flex-1 justify-start">
+    <div class="navwrap">
+      {{-- Main app links: hidden for pure ops AND pure compliance --}}
+      @unless($isPureOps || $isPureCompliance)
+        <a href="{{ route('depot.dashboard') }}" class="navlink">Dashboard</a>
+
+        @if($isAdmin || $isAccounts || $isOps)
+          <a href="{{ route('depot.clients.index') }}" class="navlink">Clients</a>
         @endif
 
-        {{-- Main nav gated by roles (desktop only) --}}
-        <nav class="hidden md:flex items-center gap-1">
-          @unless($isPureOps)
-            {{-- Everyone --}}
-            <a href="{{ route('depot.dashboard') }}" class="navlink">Dashboard</a>
+        @if($isAccounts || $isAdmin)
+          <a href="{{ route('depot.invoices.index') }}" class="navlink">Invoices</a>
+          <a href="{{ route('depot.payments.index') }}" class="navlink">Payments</a>
+        @endif
 
-            {{-- Ops + Accounts + Admin --}}
-            @if($isAdmin || $isAccounts || $isOps )
-              <a href="{{ route('depot.clients.index') }}" class="navlink">Clients</a>
-            @endif
+        @if($isAdmin || $isAccounts)
+          <a href="{{ route('depot.pool.index') }}" class="navlink">Depot Pool</a>
+        @endif
+      @endunless
 
-            {{-- Accounts + Admin --}}
-            @if($isAccounts || $isAdmin)
-              <a href="{{ route('depot.invoices.index') }}" class="navlink">Invoices</a>
-              <a href="{{ route('depot.payments.index') }}" class="navlink">Payments</a>
-            @endif
+      @if($isAdmin || $isAccounts || $isCompliance)
+        <a href="{{ route('depot.compliance.clearances.index') }}" class="navlink">Compliance</a>
+      @endif
 
-            {{-- Admin + Accounts --}}
-            @if($isAdmin || $isAccounts)
-              <a href="{{ route('depot.pool.index') }}" class="navlink">Depot Pool</a>
-            @endif
-          @endunless
-
-          {{-- Tank Dips / Depot operations (always visible) --}}
+      @unless($isPureCompliance)
+        @if($isAdmin || $isAccounts || $isOps)
           @php
             $isDepotOps = str_starts_with(request()->route()?->getName() ?? '', 'depot.operations.');
           @endphp
 
           <a href="{{ route('depot.operations.index') }}"
-             class="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-xs font-medium
-                {{ $isDepotOps ? 'bg-gray-900 text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+            class="navlink navlink--withicon {{ $isDepotOps ? 'navlink--active' : '' }}">
             <svg class="h-4 w-4 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
               <path stroke-linecap="round" stroke-linejoin="round"
                     d="M4 7h16M4 12h10M4 17h7M17 10l3 2-3 2" />
             </svg>
             <span>Depot operations</span>
           </a>
-        </nav>
+        @endif
+      @endunless
+    </div>
+  </nav>
       </div>
 
       <div class="flex items-center gap-2">
@@ -131,7 +145,7 @@
         @yield('topbar-search')
 
         {{-- Custom Depot dropdown (hidden for pure ops) --}}
-        @unless($isPureOps)
+        @unless($isPureOps || $isPureCompliance)
           <div id="depotDropdown" class="hidden md:flex items-center gap-2 mr-2">
             <span class="text-[11px] uppercase tracking-wide text-gray-400">Depot</span>
 
@@ -240,30 +254,40 @@
       </div>
     </div>
 
-    {{-- Mobile collapsible nav --}}
-    <div id="mobileNavPanel" class="md:hidden hidden border-t border-gray-100 bg-white">
-      <div class="mx-auto max-w-7xl px-4 py-2 space-y-1 text-sm">
-        @unless($isPureOps)
-          <a href="{{ route('depot.dashboard') }}" class="navlink block">Dashboard</a>
+  {{-- Mobile collapsible nav --}}
+  <div id="mobileNavPanel" class="md:hidden hidden border-t border-gray-100 bg-white">
+    <div class="mx-auto max-w-7xl px-4 py-2 space-y-1 text-sm">
+      {{-- Main app links: hidden for pure ops AND pure compliance --}}
+      @unless($isPureOps || $isPureCompliance)
+        <a href="{{ route('depot.dashboard') }}" class="navlink block">Dashboard</a>
 
-          @if($isAdmin || $isAccounts || $isOps )
-            <a href="{{ route('depot.clients.index') }}" class="navlink block">Clients</a>
-          @endif
+        @if($isAdmin || $isAccounts || $isOps)
+          <a href="{{ route('depot.clients.index') }}" class="navlink block">Clients</a>
+        @endif
 
-          @if($isAccounts || $isAdmin)
-            <a href="{{ route('depot.invoices.index') }}" class="navlink block">Invoices</a>
-            <a href="{{ route('depot.payments.index') }}" class="navlink block">Payments</a>
-          @endif
+        @if($isAccounts || $isAdmin)
+          <a href="{{ route('depot.invoices.index') }}" class="navlink block">Invoices</a>
+          <a href="{{ route('depot.payments.index') }}" class="navlink block">Payments</a>
+        @endif
 
-          @if($isAdmin || $isAccounts)
-            <a href="{{ route('depot.pool.index') }}" class="navlink block">Depot Pool</a>
-          @endif
-        @endunless
+        @if($isAdmin || $isAccounts)
+          <a href="{{ route('depot.pool.index') }}" class="navlink block">Depot Pool</a>
+        @endif
+      @endunless
 
-        {{-- Depot operations always --}}
-        <a href="{{ route('depot.operations.index') }}" class="navlink block">Depot operations</a>
-      </div>
+      {{-- Compliance link (admin/accounts/compliance can see it) --}}
+      @if($isAdmin || $isAccounts || $isCompliance)
+        <a href="{{ route('depot.compliance.clearances.index') }}" class="navlink block">Compliance</a>
+      @endif
+
+      {{-- Depot operations: only for ops/admin/accounts, NOT for pure compliance --}}
+      @unless($isPureCompliance)
+        @if($isAdmin || $isAccounts || $isOps)
+          <a href="{{ route('depot.operations.index') }}" class="navlink block">Depot operations</a>
+        @endif
+      @endunless
     </div>
+  </div>
   </header>
 
   {{-- Main container --}}
@@ -591,15 +615,23 @@
 
   {{-- Global helpers --}}
   <script>
-    // ---------- Topbar active link style ----------
-    (function() {
-      const path = location.pathname;
-      document.querySelectorAll('.navlink').forEach(a => {
-        const href = a.getAttribute('href') || '';
-        const isActive = href && path.startsWith(href);
-        a.className = 'navlink ' + (isActive ? 'navlink--active' : '');
-      });
-    })();
+
+  // ---------- Topbar active link style ----------
+  (function() {
+    const path = location.pathname;
+
+    document.querySelectorAll('a.navlink').forEach(a => {
+      const href = a.getAttribute('href') || '';
+      if (!href) return;
+
+      const isActive = path === href || (href !== '/' && path.startsWith(href));
+
+      a.classList.toggle('navlink--active', isActive);
+      if (isActive) a.setAttribute('aria-current', 'page');
+      else a.removeAttribute('aria-current');
+    });
+  })();
+
 
     // ---------- Mobile nav toggle ----------
     (function () {
@@ -931,16 +963,53 @@ document.addEventListener('keydown', (e) => {
   @stack('scripts')
 
   {{-- Inline small CSS for navlink --}}
-  <style>
-    .navlink {
-      padding: .5rem .75rem;
-      border-radius: .75rem;
-      font-size: .875rem;
-      color: #6b7280; /* gray-500 */
-    }
-    .navlink:hover { color:#111827; background:#F3F4F6; }
-    .navlink--active { color:#111827; background:#EEF2FF; } /* indigo-50 */
-  </style>
+<style>
+  /* Premium “pill bar” */
+  .navwrap{
+    display:flex;
+    align-items:center;
+    gap:.25rem;
+    padding:.25rem;
+    border:1px solid rgba(229,231,235,.8);
+    background: rgba(249,250,251,.9);
+    border-radius: 9999px;
+    box-shadow: 0 1px 0 rgba(17,24,39,.04);
+    max-width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+  .navwrap::-webkit-scrollbar{ display:none; }
+  .navwrap{ scrollbar-width:none; }
+
+  .navlink{
+    display:inline-flex;
+    align-items:center;
+    gap:.375rem;
+    padding:.45rem .7rem;
+    border-radius: 9999px;
+    font-size: .8125rem;
+    font-weight: 600;
+    color:#6b7280;
+    transition: background .15s ease, color .15s ease, box-shadow .15s ease;
+    outline: none;
+  }
+  .navlink:hover{
+    color:#111827;
+    background: rgba(243,244,246,.9);
+  }
+  .navlink:focus-visible{
+    box-shadow: 0 0 0 3px rgba(99,102,241,.25);
+  }
+
+  .navlink--active{
+    color:#111827;
+    background: rgba(238,242,255,.95);
+    box-shadow: inset 0 0 0 1px rgba(199,210,254,.8);
+  }
+
+  .navlink--withicon svg{ flex:0 0 auto; }
+</style>
 
   <script>
     if ('serviceWorker' in navigator) {

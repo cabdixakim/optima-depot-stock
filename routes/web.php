@@ -48,6 +48,17 @@ Route::get('/dashboard', function () {
         return redirect()->route('depot.operations.index');
     }
 
+    $complianceRoleNames = ['compliance'];
+
+    $hasCompliance = count(array_intersect($roles, $complianceRoleNames)) > 0;
+    $nonComplianceRoles = array_diff($roles, $complianceRoleNames);
+    $isComplianceOnly = $hasCompliance && count($nonComplianceRoles) === 0;
+
+    if ($isComplianceOnly) {
+        // This is the route we built for the compliance dashboard
+        return redirect()->route('depot.compliance.clearances.index');
+    }
+
     // ----- 3) Everyone else (admin, accounts, mixed roles, etc.) → main depot dashboard -----
     return redirect()->route('depot.dashboard');
 })->middleware(['auth'])->name('dashboard');
@@ -59,10 +70,10 @@ use Illuminate\Support\Facades\Hash;
 
 Route::get('/debug-make-admin', function () {
     $user = User::updateOrCreate(
-        ['email' => 'admin@twins.com'],
+        ['email' => 'Debugadmin@twins.com'],
         [
             'name'              => 'System Admin',
-            'password'          => Hash::make('password'),
+            'password'          => Hash::make('turumaqte'),
             'email_verified_at' => now(),
         ]
     );

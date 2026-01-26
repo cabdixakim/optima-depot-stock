@@ -26,6 +26,8 @@ use Optima\DepotStock\Http\Controllers\TankController;
 use Optima\DepotStock\Http\Controllers\Settings\AccountController;
 use Optima\DepotStock\Http\Controllers\Portal\ClientPortalController;
 
+use Optima\DepotStock\Http\Controllers\Compliance\ClearanceController;
+
 // ✅ NEW: Depot operations controllers
 use Optima\DepotStock\Http\Controllers\DepotOperationsController;
 use Optima\DepotStock\Http\Controllers\DepotReconController;
@@ -247,4 +249,59 @@ Route::middleware(['web', 'auth', 'client.portal'])
         Route::get('/account',           [ClientPortalController::class, 'account'])->name('account');
         Route::post('/account/profile',  [ClientPortalController::class, 'updateProfile'])->name('account.profile');
         Route::post('/account/password', [ClientPortalController::class, 'updatePassword'])->name('account.password');
+    });
+
+        
+// =========================================================
+// COMPLIANCE MODULE (/depot/compliance/...)
+// =========================================================   
+
+Route::middleware(['web','auth', 'role:admin,compliance,accountant'])
+    ->prefix('depot/compliance')
+    ->name('depot.compliance.')
+    ->group(function () {
+
+        Route::get('/clearances', [ClearanceController::class, 'index'])
+            ->name('clearances.index');
+
+        Route::get('/clearances/data', [ClearanceController::class, 'data'])
+    ->name('clearances.data');
+
+        Route::get('/clearances/create', [ClearanceController::class, 'create'])
+            ->middleware('role:admin,compliance,owner')
+            ->name('clearances.create');
+
+        Route::post('/clearances', [ClearanceController::class, 'store'])
+            ->middleware('role:admin,compliance,owner')
+            ->name('clearances.store');
+
+                    // Linkable list + preview (read-only) for Offload modal
+        Route::get('/clearances/linkable', [ClearanceController::class, 'linkable'])
+            ->name('clearances.linkable');
+
+        Route::get('/clearances/{clearance}/link-preview', [ClearanceController::class, 'linkPreview'])
+            ->name('clearances.linkPreview');
+
+        Route::get('/clearances/{clearance}', [ClearanceController::class, 'show'])
+            ->name('clearances.show');
+
+        Route::post('/clearances/{clearance}/submit', [ClearanceController::class, 'submit'])
+            ->middleware('role:admin,compliance,owner')
+            ->name('clearances.submit');
+
+        Route::post('/clearances/{clearance}/issue-tr8', [ClearanceController::class, 'issueTr8'])
+            ->middleware('role:admin,compliance,owner')
+            ->name('clearances.issue_tr8');
+
+        Route::post('/clearances/{clearance}/arrive', [ClearanceController::class, 'markArrived'])
+            ->middleware('role:admin,compliance,owner')
+            ->name('clearances.arrive');
+
+        Route::post('/clearances/{clearance}/cancel', [ClearanceController::class, 'cancel'])
+            ->middleware('role:admin,compliance,owner')
+            ->name('clearances.cancel');
+        Route::get('clearances/{clearance}/documents/{document}', 
+            [ClearanceController::class, 'openDocument']
+        )->name('clearances.documents.open');
+    
     });
