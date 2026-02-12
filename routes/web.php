@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\ClientController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -63,21 +64,5 @@ Route::get('/dashboard', function () {
     return redirect()->route('depot.dashboard');
 })->middleware(['auth'])->name('dashboard');
 
-// Debug route to create or update an admin user::::: delete before production
 
-use App\Models\User;
-use Illuminate\Support\Facades\Hash;
-
-Route::get('/debug-make-admin', function () {
-    $user = User::updateOrCreate(
-        ['email' => 'Debugadmin@twins.com'],
-        [
-            'name'              => 'System Admin',
-            'password'          => Hash::make('turumaqte'),
-            'email_verified_at' => now(),
-        ]
-    );
-
-    return $user;
-});
 

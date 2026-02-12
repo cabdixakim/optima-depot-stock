@@ -6,6 +6,7 @@ $vendorDir = dirname(__DIR__);
 $baseDir = dirname($vendorDir);
 
 return array(
+    'App\\Console\\Commands\\MakeAdmin' => $baseDir . '/app/Console/Commands/MakeAdmin.php',
     'App\\Http\\Controllers\\Auth\\VerifyEmailController' => $baseDir . '/app/Http/Controllers/Auth/VerifyEmailController.php',
     'App\\Http\\Controllers\\Controller' => $baseDir . '/app/Http/Controllers/Controller.php',
     'App\\Livewire\\Actions\\Logout' => $baseDir . '/app/Livewire/Actions/Logout.php',
@@ -3573,6 +3574,7 @@ return array(
     'NunoMaduro\\Collision\\Writer' => $vendorDir . '/nunomaduro/collision/src/Writer.php',
     'Optima\\DepotStock\\DepotStockServiceProvider' => $vendorDir . '/optima/depot-stock/src/DepotStockServiceProvider.php',
     'Optima\\DepotStock\\Http\\Controllers\\AdjustmentController' => $vendorDir . '/optima/depot-stock/src/Http/Controllers/AdjustmentController.php',
+    'Optima\\DepotStock\\Http\\Controllers\\AuditController' => $vendorDir . '/optima/depot-stock/src/Http/Controllers/AuditController.php',
     'Optima\\DepotStock\\Http\\Controllers\\Auth\\PackageAuthController' => $vendorDir . '/optima/depot-stock/src/Http/Controllers/Auth/PackageAuthController.php',
     'Optima\\DepotStock\\Http\\Controllers\\BillingWaitingController' => $vendorDir . '/optima/depot-stock/src/Http/Controllers/BillingWaitingController.php',
     'Optima\\DepotStock\\Http\\Controllers\\ClientController' => $vendorDir . '/optima/depot-stock/src/Http/Controllers/ClientController.php',
@@ -6591,7 +6593,14 @@ return array(
     'Tests\\Feature\\Auth\\PasswordResetTest' => $baseDir . '/tests/Feature/Auth/PasswordResetTest.php',
     'Tests\\Feature\\Auth\\PasswordUpdateTest' => $baseDir . '/tests/Feature/Auth/PasswordUpdateTest.php',
     'Tests\\Feature\\Auth\\RegistrationTest' => $baseDir . '/tests/Feature/Auth/RegistrationTest.php',
+    'Tests\\Feature\\ClientTest' => $baseDir . '/tests/Feature/ClientTest.php',
+    'Tests\\Feature\\ComplianceTest' => $baseDir . '/tests/Feature/ComplianceTest.php',
+    'Tests\\Feature\\DashboardTest' => $baseDir . '/tests/Feature/DashboardTest.php',
+    'Tests\\Feature\\DipTest' => $baseDir . '/tests/Feature/DipTest.php',
     'Tests\\Feature\\ExampleTest' => $baseDir . '/tests/Feature/ExampleTest.php',
+    'Tests\\Feature\\InvoiceTest' => $baseDir . '/tests/Feature/InvoiceTest.php',
+    'Tests\\Feature\\PaymentTest' => $baseDir . '/tests/Feature/PaymentTest.php',
+    'Tests\\Feature\\PortalTest' => $baseDir . '/tests/Feature/PortalTest.php',
     'Tests\\Feature\\ProfileTest' => $baseDir . '/tests/Feature/ProfileTest.php',
     'Tests\\TestCase' => $baseDir . '/tests/TestCase.php',
     'Tests\\Unit\\ExampleTest' => $baseDir . '/tests/Unit/ExampleTest.php',

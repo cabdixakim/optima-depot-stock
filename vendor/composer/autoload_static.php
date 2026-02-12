@@ -554,6 +554,7 @@ class ComposerStaticInitb29015b13df12692adf14609388ea840
     );
 
     public static $classMap = array (
+        'App\\Console\\Commands\\MakeAdmin' => __DIR__ . '/../..' . '/app/Console/Commands/MakeAdmin.php',
         'App\\Http\\Controllers\\Auth\\VerifyEmailController' => __DIR__ . '/../..' . '/app/Http/Controllers/Auth/VerifyEmailController.php',
         'App\\Http\\Controllers\\Controller' => __DIR__ . '/../..' . '/app/Http/Controllers/Controller.php',
         'App\\Livewire\\Actions\\Logout' => __DIR__ . '/../..' . '/app/Livewire/Actions/Logout.php',
@@ -4121,6 +4122,7 @@ class ComposerStaticInitb29015b13df12692adf14609388ea840
         'NunoMaduro\\Collision\\Writer' => __DIR__ . '/..' . '/nunomaduro/collision/src/Writer.php',
         'Optima\\DepotStock\\DepotStockServiceProvider' => __DIR__ . '/..' . '/optima/depot-stock/src/DepotStockServiceProvider.php',
         'Optima\\DepotStock\\Http\\Controllers\\AdjustmentController' => __DIR__ . '/..' . '/optima/depot-stock/src/Http/Controllers/AdjustmentController.php',
+        'Optima\\DepotStock\\Http\\Controllers\\AuditController' => __DIR__ . '/..' . '/optima/depot-stock/src/Http/Controllers/AuditController.php',
         'Optima\\DepotStock\\Http\\Controllers\\Auth\\PackageAuthController' => __DIR__ . '/..' . '/optima/depot-stock/src/Http/Controllers/Auth/PackageAuthController.php',
         'Optima\\DepotStock\\Http\\Controllers\\BillingWaitingController' => __DIR__ . '/..' . '/optima/depot-stock/src/Http/Controllers/BillingWaitingController.php',
         'Optima\\DepotStock\\Http\\Controllers\\ClientController' => __DIR__ . '/..' . '/optima/depot-stock/src/Http/Controllers/ClientController.php',
@@ -7139,7 +7141,14 @@ class ComposerStaticInitb29015b13df12692adf14609388ea840
         'Tests\\Feature\\Auth\\PasswordResetTest' => __DIR__ . '/../..' . '/tests/Feature/Auth/PasswordResetTest.php',
         'Tests\\Feature\\Auth\\PasswordUpdateTest' => __DIR__ . '/../..' . '/tests/Feature/Auth/PasswordUpdateTest.php',
         'Tests\\Feature\\Auth\\RegistrationTest' => __DIR__ . '/../..' . '/tests/Feature/Auth/RegistrationTest.php',
+        'Tests\\Feature\\ClientTest' => __DIR__ . '/../..' . '/tests/Feature/ClientTest.php',
+        'Tests\\Feature\\ComplianceTest' => __DIR__ . '/../..' . '/tests/Feature/ComplianceTest.php',
+        'Tests\\Feature\\DashboardTest' => __DIR__ . '/../..' . '/tests/Feature/DashboardTest.php',
+        'Tests\\Feature\\DipTest' => __DIR__ . '/../..' . '/tests/Feature/DipTest.php',
         'Tests\\Feature\\ExampleTest' => __DIR__ . '/../..' . '/tests/Feature/ExampleTest.php',
+        'Tests\\Feature\\InvoiceTest' => __DIR__ . '/../..' . '/tests/Feature/InvoiceTest.php',
+        'Tests\\Feature\\PaymentTest' => __DIR__ . '/../..' . '/tests/Feature/PaymentTest.php',
+        'Tests\\Feature\\PortalTest' => __DIR__ . '/../..' . '/tests/Feature/PortalTest.php',
         'Tests\\Feature\\ProfileTest' => __DIR__ . '/../..' . '/tests/Feature/ProfileTest.php',
         'Tests\\TestCase' => __DIR__ . '/../..' . '/tests/TestCase.php',
         'Tests\\Unit\\ExampleTest' => __DIR__ . '/../..' . '/tests/Unit/ExampleTest.php',

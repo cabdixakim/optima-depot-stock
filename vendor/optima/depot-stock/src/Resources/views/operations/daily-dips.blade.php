@@ -1,6 +1,8 @@
 {{-- resources/views/vendor/depot-stock/operations/daily-dips.blade.php --}}
 @extends('depot-stock::operations.layout')
 
+@include('depot-stock::operations.partials.depot-pool-adjust-modal')
+
 @section('ops-content')
 @php
     use Illuminate\Support\Carbon;
@@ -49,6 +51,7 @@
 
     $movOff  = $movementCurrent['offloads_l'] ?? null;
     $movLoad = $movementCurrent['loads_l']    ?? null;
+    $movAdj  = $movementCurrent['adj_l_20']   ?? null;
     $movNet  = $movementCurrent['net_l']      ?? null;
 
     // Pre-generate URLs for JS
@@ -75,6 +78,27 @@
 
     // PATCH: lock flag for disabling actions
     $isLocked = (bool) ($currentDay && $currentDay->status === 'locked');
+
+    // --- VARIANCE ADJUSTMENT BUTTON LOGIC ---
+    $showVarianceAdjustBtn = false;
+    $varianceAdjustedBy = null;
+    $varianceTolerance = 50; // litres, adjust as needed
+    $maxDaysOld = 5;
+    if ($currentDay && $currentDay->status === 'locked' && isset($currentDay->variance_l_20)) {
+        $absVariance = abs($currentDay->variance_l_20);
+        $daysOld = \Illuminate\Support\Carbon::parse($forDate)->diffInDays(\Illuminate\Support\Carbon::today());
+        // Check if depot pool adjustment already exists for this tank-day
+        $adjustEntry = \Optima\DepotStock\Models\DepotPoolEntry::where('depot_id', $currentTank->depot_id)
+            ->where('product_id', $currentTank->product_id)
+            ->where('ref_type', \Optima\DepotStock\Models\DepotPoolEntry::REF_ALLOWANCE_CORR)
+            ->where('ref_id', $currentTank->id)
+            ->whereDate('date', $forDate->toDateString())
+            ->first();
+        if ($adjustEntry) {
+            $varianceAdjustedBy = $adjustEntry->user?->name ?? 'Unknown';
+        }
+        $showVarianceAdjustBtn = $absVariance > $varianceTolerance && $daysOld <= $maxDaysOld && $currentDay->variance_l_20 != 0 && !$adjustEntry;
+    }
 @endphp
 
 <div class="space-y-6">
@@ -417,7 +441,7 @@
                             data-note="{{ $closingDip->note ?? '' }}"
                             @if($isLocked) disabled aria-disabled="true" @endif
                             class="mt-4 inline-flex items-center justify-center rounded-full bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 active:scale-[0.97]
-                                   @if($isLocked) opacity-40 grayscale cursor-not-allowed hover:bg-emerald-600 active:scale-100 @endif"
+                                   @if($isLocked) opacity-40 grayscale cursor-not-allowed hover:bg-emerald-600 active:100 @endif"
                         >
                             {{ $hasClosing ? 'Edit closing dip' : 'Record closing dip' }}
                         </button>
@@ -430,8 +454,43 @@
                         <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                             Opening @20°
                         </p>
-                        <p class="mt-2 text-xl font-semibold text-gray-900">
-                            {{ $formatLitres($currentDay?->opening_l_20) }}
+                        <div class="mt-2 flex flex-col gap-1">
+                            @php
+                                // Recorded opening for the day
+                                $openingBalance = $currentDay?->opening_l_20 ?? null;
+                                // Expected opening for the day (from backend, net sum up to prev day)
+                                $expectedOpening = $movementCurrent['expected_opening_l_20'] ?? null;
+                                // Variance between recorded and expected opening
+                                $openingVariance = ($openingBalance !== null && $expectedOpening !== null)
+                                    ? ($openingBalance - $expectedOpening)
+                                    : null;
+                            @endphp
+                            <div class="flex items-center gap-2">
+                                <span class="text-xl font-semibold text-gray-900">
+                                    {{ $formatLitres($openingBalance) }}
+                                </span>
+                                <span class="text-xs text-gray-400">Recorded</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xl font-semibold text-indigo-700">
+                                    {{ $formatLitres($expectedOpening) }}
+                                </span>
+                                <span class="text-xs text-gray-400">Expected</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xl font-semibold {{ $openingVariance !== null && $openingVariance >= 0 ? 'text-emerald-600' : 'text-rose-600' }}">
+                                    @if($openingVariance !== null)
+                                        {{ $openingVariance >= 0 ? '+' : '' }}{{ number_format($openingVariance, 0) }} L
+                                    @else
+                                        —
+                                    @endif
+                                </span>
+                                <span class="text-xs text-gray-400">Variance</span>
+                            </div>
+                        </div>
+                        <p class="mt-1 text-xs text-gray-500">
+                            <span class="font-medium">Prev closing:</span>
+                            {{ isset($movementCurrent['opening_balance_prev_closing_l_20']) ? number_format($movementCurrent['opening_balance_prev_closing_l_20'], 0) . ' L' : '—' }}
                         </p>
                     </div>
 
@@ -440,7 +499,17 @@
                             Expected closing @20°
                         </p>
                         <p class="mt-2 text-xl font-semibold text-gray-900">
-                            {{ $formatLitres($currentDay?->closing_expected_l_20) }}
+                            @php
+                                // Show calculation for expected closing: opening + offloads - loads + adjustments
+                                $expectedClosing = null;
+                                if ($currentDay && isset($movementCurrent['offloads_l'], $movementCurrent['loads_l'], $movementCurrent['adj_l_20'])) {
+                                    $expectedClosing = ($currentDay->opening_l_20 ?? 0)
+                                        + ($movementCurrent['offloads_l'] ?? 0)
+                                        - ($movementCurrent['loads_l'] ?? 0)
+                                        + ($movementCurrent['adj_l_20'] ?? 0);
+                                }
+                            @endphp
+                            {{ $formatLitres($expectedClosing) }}
                         </p>
                     </div>
 
@@ -476,7 +545,7 @@
                         </p>
                     </div>
 
-                    <div class="grid gap-4 sm:grid-cols-3">
+                    <div class="grid gap-4 sm:grid-cols-4">
                         <div class="rounded-xl bg-gray-50/80 px-4 py-3">
                             <p class="text-[11px] uppercase text-gray-500 font-semibold">Offloads</p>
                             <p class="mt-2 text-lg font-semibold text-gray-900">
@@ -487,7 +556,6 @@
                                 @endif
                             </p>
                         </div>
-
                         <div class="rounded-xl bg-gray-50/80 px-4 py-3">
                             <p class="text-[11px] uppercase text-gray-500 font-semibold">Loads</p>
                             <p class="mt-2 text-lg font-semibold text-gray-900">
@@ -498,7 +566,18 @@
                                 @endif
                             </p>
                         </div>
-
+                        <div class="rounded-xl bg-gray-50/80 px-4 py-3">
+                            <p class="text-[11px] uppercase text-gray-500 font-semibold">Adjustments</p>
+                            <p class="mt-2 text-lg font-semibold text-gray-900">
+                                @if($movAdj !== null && $movAdj != 0)
+                                    <span class="{{ $movAdj > 0 ? 'text-emerald-600' : 'text-rose-600' }}">
+                                        {{ $movAdj > 0 ? '+' : '' }}{{ number_format($movAdj, 0) }} L
+                                    </span>
+                                @else
+                                    —
+                                @endif
+                            </p>
+                        </div>
                         <div class="rounded-xl bg-gray-50/80 px-4 py-3">
                             <p class="text-[11px] uppercase text-gray-500 font-semibold">Net</p>
                             <p class="mt-2 text-lg font-semibold {{ $movNet >= 0 ? 'text-emerald-600' : 'text-rose-600' }}">

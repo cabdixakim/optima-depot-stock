@@ -3494,12 +3494,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/cabdixakim/Depot-stock-package.git",
-                "reference": "97ef7fb01d6501b45b139b9e6a5f6f08da6c797a"
+                "reference": "91978555300116d8274a4612fab50d2b359d4427"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/cabdixakim/Depot-stock-package/zipball/97ef7fb01d6501b45b139b9e6a5f6f08da6c797a",
-                "reference": "97ef7fb01d6501b45b139b9e6a5f6f08da6c797a",
+                "url": "https://api.github.com/repos/cabdixakim/Depot-stock-package/zipball/91978555300116d8274a4612fab50d2b359d4427",
+                "reference": "91978555300116d8274a4612fab50d2b359d4427",
                 "shasum": ""
             },
             "require": {
@@ -3510,7 +3510,10 @@
                 "livewire/livewire": "^3.0",
                 "php": ">=8.2"
             },
-            "time": "2026-01-24T17:33:45+00:00",
+            "require-dev": {
+                "orchestra/testbench": "^10.9"
+            },
+            "time": "2026-02-12T01:24:50+00:00",
             "default-branch": true,
             "type": "library",
             "extra": {
@@ -3524,6 +3527,11 @@
             "autoload": {
                 "psr-4": {
                     "Optima\\DepotStock\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "Optima\\DepotStock\\Tests\\": "tests/"
                 }
             },
             "license": [

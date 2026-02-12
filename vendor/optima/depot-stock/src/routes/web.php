@@ -33,6 +33,9 @@ use Optima\DepotStock\Http\Controllers\DepotOperationsController;
 use Optima\DepotStock\Http\Controllers\DepotReconController;
 use Optima\DepotStock\Http\Controllers\OperationsClientController;
 
+// ✅ NEW: Audit controller
+use Optima\DepotStock\Http\Controllers\AuditController;
+
 // =========================================================
 // STAFF AREA (/depot/...)
 // =========================================================
@@ -148,11 +151,20 @@ Route::middleware(['web', 'auth'])
             Route::post('/daily-dips/{depot}/{date}/lock', [DepotReconController::class, 'lockDay'])
                 ->name('daily-dips.lock');
 
-            Route::get('/operations/dips-history', [DepotOperationsController::class, 'dipsHistory'])
+            Route::get('/dips-history', [DepotOperationsController::class, 'dipsHistory'])
              ->name('dips-history');
             // Operations client list (lean)
             Route::get('/clients', [OperationsClientController::class, 'index'])
                 ->name('clients.index');
+
+            // Audit view (flagged variances)
+            Route::get('/audit', [AuditController::class, 'index'])
+                ->name('audit');
+
+           
+            // Audit CSV export
+            Route::get('/audit/export', [AuditController::class, 'export'])
+                ->name('audit.export');
         });
 
         // ---------------- Dips (Daily tank dips per depot) ----------------
@@ -168,6 +180,8 @@ Route::middleware(['web', 'auth'])
             Route::get('/pool',           [DepotPoolController::class, 'index'])->name('pool.index');
             Route::post('/pool/transfer', [DepotPoolController::class, 'transfer'])->name('pool.transfer');
             Route::post('/pool/sell',     [DepotPoolController::class, 'sell'])->name('pool.sell');
+            // DEPOT POOL VARIANCE ADJUSTMENT (AJAX, admin+accountant)
+            Route::post('/pool/adjust-variance', [DepotPoolController::class, 'adjustVariance'])->name('pool.adjust-variance');
         });
 
         // =================================================================

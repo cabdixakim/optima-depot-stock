@@ -58,32 +58,25 @@ class DepotReconController extends Controller
 
                 try {
                     $tankIds = $tanks->pluck('id');
-
-                    $offloadsByTank = \Optima\DepotStock\Models\Offload::query()
-                        ->whereIn('tank_id', $tankIds)
-                        ->whereDate('date', $date->toDateString())     // ⬅️ adjust date column if needed
-                        ->get(['tank_id', 'delivered_20_l'])           // ⬅️ adjust volume column if needed
-                        ->groupBy('tank_id')
-                        ->map(fn ($rows) => (float) $rows->sum('delivered_20_l'));
-
-                    $loadsByTank = \Optima\DepotStock\Models\Load::query()
-                        ->whereIn('tank_id', $tankIds)
-                        ->whereDate('date', $date->toDateString())     // ⬅️ adjust date column if needed
-                        ->get(['tank_id', 'loaded_20_l'])              // ⬅️ adjust volume column if needed
-                        ->groupBy('tank_id')
-                        ->map(fn ($rows) => (float) $rows->sum('loaded_20_l'));
-
-                    $movementByTank = $tankIds->mapWithKeys(function ($tankId) use ($offloadsByTank, $loadsByTank) {
-                        $off  = $offloadsByTank[$tankId] ?? 0.0;
-                        $load = $loadsByTank[$tankId]   ?? 0.0;
-
-                        return [
-                            $tankId => [
-                                'offloads_l' => $off,
-                                'loads_l'    => $load,
-                                'net_l'      => $off - $load,
-                            ],
-                        ];
+                    $movementByTank = $tankIds->mapWithKeys(function ($tankId) use ($date) {
+                        // Use DepotReconService to get full movement summary including adjustments
+                        $totals = $this->recon->movementTotalsForDay($tankId, $date);
+                        // Add expected opening for the day
+                        $tank = Tank::find($tankId);
+                        $expectedOpening = null;
+                        $prevClosing = null;
+                        if ($tank) {
+                            $expectedOpening = $this->recon->getExpectedOpening($tank, $date);
+                            // Previous day's closing dip
+                            $prevDate = $date->copy()->subDay();
+                            $prevDay = \Optima\DepotStock\Models\DepotReconDay::where('tank_id', $tankId)
+                                ->whereDate('date', $prevDate->toDateString())
+                                ->first();
+                            $prevClosing = $prevDay?->closing_actual_l_20;
+                        }
+                        $totals['expected_opening_l_20'] = $expectedOpening;
+                        $totals['opening_balance_prev_closing_l_20'] = $prevClosing;
+                        return [$tankId => $totals];
                     });
                 } catch (\Throwable $e) {
                     $movementByTank = collect(); // fail-safe, UI will just show "—"

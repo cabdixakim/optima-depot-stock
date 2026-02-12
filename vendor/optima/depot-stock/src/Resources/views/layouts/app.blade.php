@@ -68,33 +68,52 @@
           </svg>
         </button>
 
-      {{-- Brand: centred on mobile, normal on md+ --}}
-      @if($isPureOps)
-        <span class="inline-flex items-center gap-2 font-semibold text-gray-900 flex-1 justify-center md:flex-none md:justify-start">
-          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M3 11h4v10H3zM9 3h4v18H9zM15 7h4v14h-4z"/>
-          </svg>
-          Depot Stock
-        </span>
+{{-- Brand: minimal wordmark --}}
+@php
+  $brandName = config('app.name') ?? 'Depot Stock';
 
-      @elseif($isPureCompliance)
-        <a href="{{ route('depot.compliance.clearances.index') }}"
-          class="inline-flex items-center gap-2 font-semibold text-gray-900 flex-1 justify-center md:flex-none md:justify-start">
-          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M3 11h4v10H3zM9 3h4v18H9zM15 7h4v14h-4z"/>
-          </svg>
-          Depot Stock
-        </a>
+  $brandTag  = $isPureOps ? 'span' : 'a';
+  $brandHref = $isPureCompliance
+    ? route('depot.compliance.clearances.index')
+    : route('depot.dashboard');
+@endphp
 
-      @else
-        <a href="{{ route('depot.dashboard') }}"
-          class="inline-flex items-center gap-2 font-semibold text-gray-900 flex-1 justify-center md:flex-none md:justify-start">
-          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M3 11h4v10H3zM9 3h4v18H9zM15 7h4v14h-4z"/>
-          </svg>
-          Depot Stock
-        </a>
-      @endif
+<{{ $brandTag }}
+  @if($brandTag === 'a') href="{{ $brandHref }}" @endif
+  class="flex-1 md:flex-none inline-flex items-center justify-center md:justify-start select-none"
+>
+  <svg
+    viewBox="0 0 900 120"
+    class="h-6 w-auto"
+    role="img"
+    aria-label="{{ $brandName }}"
+  >
+    <defs>
+      <linearGradient id="brandInk" x1="0" x2="1" y1="0" y2="0">
+        <stop offset="0" stop-color="#0f172a"/>
+        <stop offset="1" stop-color="#1f2937"/>
+      </linearGradient>
+    </defs>
+
+    <text
+      x="0"
+      y="78"
+      fill="url(#brandInk)"
+      font-size="72"
+      letter-spacing="0.8"
+      font-weight="500"
+      font-family='
+        "Playfair Display",
+        "Libre Baskerville",
+        "Cormorant Garamond",
+        "Georgia",
+        serif
+      '
+    >
+      {{ $brandName }}
+    </text>
+  </svg>
+</{{ $brandTag }}>
 
   <nav class="hidden md:flex items-center gap-1 min-w-0 flex-1 justify-start">
     <div class="navwrap">

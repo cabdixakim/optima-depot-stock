@@ -131,8 +131,9 @@ class DepotReconService
         $totals = $this->movementTotalsForDay($day->tank_id, $date);
 
         $expected = $day->opening_l_20
-            + ($totals['in_l_20'] ?? 0.0)
-            - ($totals['out_l_20'] ?? 0.0);
+            + ($totals['offloads_l'] ?? 0.0)
+            - ($totals['loads_l'] ?? 0.0)
+            + ($totals['adj_l_20'] ?? 0.0);
 
         $day->closing_expected_l_20 = $expected;
     }
@@ -159,29 +160,97 @@ class DepotReconService
     }
 
     /**
+     * Get expected opening for a day: net sum of all movements up to previous day.
+     */
+    public function getExpectedOpening(Tank $tank, Carbon $date): ?float
+    {
+        $prevDate = $date->copy()->subDay();
+        $prevDay = DepotReconDay::where('tank_id', $tank->id)
+            ->whereDate('date', $prevDate->toDateString())
+            ->first();
+        if ($prevDay && $prevDay->closing_actual_l_20 !== null) {
+            return (float) $prevDay->closing_actual_l_20;
+        }
+        // Fallback: net sum of all movements up to previous day
+        $offloads = (float) Offload::where('tank_id', $tank->id)
+            ->whereDate('date', '<=', $prevDate->toDateString())
+            ->sum('delivered_20_l');
+        $loads = (float) Load::where('tank_id', $tank->id)
+            ->whereDate('date', '<=', $prevDate->toDateString())
+            ->sum('loaded_20_l');
+        $adjs = (float) Adjustment::where('tank_id', $tank->id)
+            ->whereDate('date', '<=', $prevDate->toDateString())
+            ->sum('amount_20_l');
+        return $offloads - $loads + $adjs;
+    }
+
+    /**
+     * Flag opening variance for a day: actual opening vs expected opening.
+     * Adds opening_variance_l_20 and opening_variance_flag fields (if present).
+     */
+    public function flagOpeningVariance(DepotReconDay $day, Tank $tank, Carbon $date): void
+    {
+        // Calculate expected opening (previous day's closing_actual_l_20)
+        $prevDate = $date->copy()->subDay();
+        $prevDay = DepotReconDay::where('tank_id', $tank->id)
+            ->whereDate('date', $prevDate->toDateString())
+            ->first();
+        $expectedOpening = $prevDay?->closing_actual_l_20;
+        if ($expectedOpening === null || $day->opening_l_20 === null) {
+            $day->opening_variance_l_20 = null;
+            $day->opening_variance_flag = false;
+            return;
+        }
+        $var = $day->opening_l_20 - $expectedOpening;
+        $day->opening_variance_l_20 = $var;
+        // Flag if variance is nonzero (or set a tolerance if needed)
+        $day->opening_variance_flag = abs($var) > 0.0;
+    }
+
+    /**
+     * Compute opening balance for a tank and date.
+     * Returns float|null
+     */
+    public function openingBalanceForDay(int $tankId, Carbon $date): ?float
+    {
+        // Opening dip for this day
+        $day = DepotReconDay::where('tank_id', $tankId)
+            ->whereDate('date', $date->toDateString())
+            ->first();
+        if ($day && $day->opening_l_20 !== null) {
+            return (float) $day->opening_l_20;
+        }
+        return null;
+    }
+
+    /**
      * Get movement totals for one tank and one day.
      *
      * Returns:
      * [
-     *   'in_l_20'  => float,  // loads in + positive adjustments
-     *   'out_l_20' => float,  // offloads out + negative adjustments (absolute)
+     *   'in_l_20'  => float,  // offloads in
+     *   'out_l_20' => float,  // loads out
+     *   'adj_l_20' => float,  // adjustments (signed)
+     *   'offloads_l' => float, // total offloads
+     *   'loads_l'    => float, // total loads
+     *   'net_l'    => float,  // net movement (offloads - loads + adjustments)
      * ]
      */
     public function movementTotalsForDay(int $tankId, Carbon $date): array
     {
         $d = $date->toDateString();
 
-        // IN: loads into tank
-        $loadsIn = (float) Load::query()
-            ->where('tank_id', $tankId)
-            ->whereDate('date', $d)
-            ->sum('loaded_20_l');
-
-        // OUT: offloads from tank
-        $offloadsOut = (float) Offload::query()
+        // IN: offloads into tank
+        $offloadsIn = (float) Offload::query()
             ->where('tank_id', $tankId)
             ->whereDate('date', $d)
             ->sum('delivered_20_l');
+
+        // OUT: loads from tank
+        $loadsOut = (float) Load::query()
+            ->where('tank_id', $tankId)
+            ->whereDate('date', $d)
+            ->sum('loaded_20_l');
 
         // ADJ: signed (+ adds stock, - reduces stock)
         $adj = (float) Adjustment::query()
@@ -189,14 +258,18 @@ class DepotReconService
             ->whereDate('date', $d)
             ->sum('amount_20_l');
 
-        // Keep expected formula as: opening + in - out
-        // so we fold adjustments into in/out:
-        $in  = $loadsIn + max(0.0, $adj);
-        $out = $offloadsOut + max(0.0, -$adj);
+        // Correct logic: offloads = IN, loads = OUT
+        $in  = $offloadsIn;
+        $out = $loadsOut;
+        $net = $offloadsIn - $loadsOut + $adj;
 
         return [
             'in_l_20'  => round($in, 4),
             'out_l_20' => round($out, 4),
+            'adj_l_20' => round($adj, 4),
+            'offloads_l' => round($offloadsIn, 4),
+            'loads_l'    => round($loadsOut, 4),
+            'net_l'      => round($net, 4),
         ];
     }
 }
