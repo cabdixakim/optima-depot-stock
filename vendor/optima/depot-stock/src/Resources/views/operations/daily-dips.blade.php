@@ -87,6 +87,7 @@
     if ($currentDay && $currentDay->status === 'locked' && isset($currentDay->variance_l_20)) {
         $absVariance = abs($currentDay->variance_l_20);
         $daysOld = \Illuminate\Support\Carbon::parse($forDate)->diffInDays(\Illuminate\Support\Carbon::today());
+        $showVarianceAdjustBtn = $absVariance > $varianceTolerance && $daysOld <= $maxDaysOld && $currentDay->variance_l_20 != 0;
         // Check if depot pool adjustment already exists for this tank-day
         $adjustEntry = \Optima\DepotStock\Models\DepotPoolEntry::where('depot_id', $currentTank->depot_id)
             ->where('product_id', $currentTank->product_id)
@@ -290,7 +291,7 @@
                                         {{ $tank->depot->name }} — {{ $tank->product->name }}
                                     </p>
                                     <p class="truncate text-[11px] text-gray-500">
-                                        Tank T{{ $tank->id }}
+                                        Tank {{ $tank->name ?? 'T'.$tank->id }}
                                     </p>
                                 </div>
                                 <span class="inline-flex h-2.5 w-2.5 flex-shrink-0 rounded-full {{ $dotClass }}"></span>
@@ -319,7 +320,7 @@
                         <div>
                             <h2 class="text-base font-semibold text-gray-900">
                                 {{ $currentTank->depot->name }} — {{ $currentTank->product->name }}
-                                <span class="text-gray-500">(T{{ $currentTank->id }})</span>
+                                <span class="text-gray-500">({{ $currentTank->name ?? 'T'.$currentTank->id }})</span>
                             </h2>
                             <p class="text-[11px] text-gray-500 mt-1">
                                 Opening then closing dips for {{ $forDate->toDateString() }}.
@@ -374,6 +375,31 @@
                         </div>
                     </div>
                 </div>
+
+                {{-- VARIANCE ADJUSTMENT BUTTON/INFO (full-width row above cards) --}}
+                @if($showVarianceAdjustBtn)
+                    <div class="w-full mb-4" id="varianceAdjustBlock">
+                        <div class="flex flex-wrap items-center gap-2 rounded-xl border border-blue-200 bg-blue-50/80 px-4 py-3">
+                            <span class="text-xs text-gray-700">Locked day for {{ $forDate->toDateString() }} (Tank {{ $currentTank->name ?? 'T'.$currentTank->id }})</span>
+                            <span class="text-xs font-semibold {{ $currentDay->variance_l_20 > 0 ? 'text-emerald-600' : 'text-rose-600' }}">Variance: {{ $currentDay->variance_l_20 > 0 ? '+' : '' }}{{ number_format($currentDay->variance_l_20, 0) }} L</span>
+                            <button type="button" class="px-3 py-1 text-xs rounded-lg bg-indigo-600 text-white hover:bg-indigo-700" onclick="openDepotPoolAdjustModal({{ $currentDay->variance_l_20 }}, {
+                                depot_id: {{ $currentTank->depot_id }},
+                                tank_id: {{ $currentTank->id }},
+                                product_id: {{ $currentTank->product_id }},
+                                date: '{{ $forDate->toDateString() }}',
+                                variance_l_20: {{ $currentDay->variance_l_20 }}
+                            })">Adjust Depot Pool</button>
+                        </div>
+                    </div>
+                @elseif($varianceAdjustedBy)
+                    <div class="w-full mb-4" id="varianceAdjustBlock">
+                        <div class="flex flex-wrap items-center gap-2 rounded-xl border border-blue-200 bg-blue-50/80 px-4 py-3">
+                            <span class="text-xs text-gray-700">Depot pool adjusted for variance on {{ $forDate->toDateString() }} (Tank {{ $currentTank->name ?? 'T'.$currentTank->id }})</span>
+                            <span class="text-xs font-semibold {{ $currentDay->variance_l_20 > 0 ? 'text-emerald-600' : 'text-rose-600' }}">Variance: {{ $currentDay->variance_l_20 > 0 ? '+' : '' }}{{ number_format($currentDay->variance_l_20, 0) }} L</span>
+                            <span class="text-xs text-gray-500">by {{ $varianceAdjustedBy }}</span>
+                        </div>
+                    </div>
+                @endif
 
                 {{-- OPENING / CLOSING WIZARD CARDS --}}
                 <div class="grid gap-4 md:grid-cols-2">

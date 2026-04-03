@@ -123,7 +123,7 @@ new #[Layout('layouts.guest')] class extends Component
                         </label>
 
                         @if (Route::has('password.request'))
-                            <a
+                            <!-- <a
                                 class="text-sm font-medium text-emerald-700 hover:text-emerald-800
                                        dark:text-emerald-400 dark:hover:text-emerald-300
                                        focus:outline-none focus:ring-2 focus:ring-emerald-500/40 rounded-md"
@@ -131,7 +131,7 @@ new #[Layout('layouts.guest')] class extends Component
                                 wire:navigate
                             >
                                 {{ __('Forgot password?') }}
-                            </a>
+                            </a> -->
                         @endif
                     </div>
 

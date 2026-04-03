@@ -18,13 +18,19 @@ class MovementsController extends Controller
     public function data(Request $request, Client $client)
     {
         $kind = $request->query('kind', 'offloads'); // 'offloads' | 'loads'
+        
+        // Always use depot_id from session, ignore request value
+        $depotId = session('depot_id');
+        // Only filter if depotId is set and numeric
 
-        $applyFilters = function ($q) use ($request) {
+        $applyFilters = function ($q) use ($request, $depotId) {
             return $q
                 ->when($request->filled('from'), fn($qq) => $qq->whereDate('date', '>=', $request->date('from')))
                 ->when($request->filled('to'),   fn($qq) => $qq->whereDate('date', '<=', $request->date('to')))
                 ->when($request->filled('tank_id'),    fn($qq) => $qq->where('tank_id', (int)$request->input('tank_id')))
-                ->when($request->filled('product_id'), fn($qq) => $qq->where('product_id', (int)$request->input('product_id')));
+                ->when($request->filled('product_id'), fn($qq) => $qq->where('product_id', (int)$request->input('product_id')))
+                // depot filter: only apply if depotId is numeric
+                ->when(is_numeric($depotId), fn($qq) => $qq->whereHas('tank.depot', fn($d) => $d->where('id', $depotId)));
         };
 
         if ($kind === 'loads') {
@@ -120,6 +126,15 @@ class MovementsController extends Controller
                 'reference'            => $r->reference,
                 'note'                 => $r->note,
                 'billed_invoice_id'    => $r->billed_invoice_id,
+
+                // Compliance fields
+                'clearance_id'             => $r->clearance_id,
+                'compliance_bypass_reason' => $r->compliance_bypass_reason,
+                'compliance_bypass_notes'  => $r->compliance_bypass_notes,
+
+                // TR8 info for tooltip
+                'clearance_tr8_number'     => optional($r->clearance)->tr8_number,
+                'clearance_tr8_issued_at'  => optional($r->clearance)->tr8_issued_at ? optional($r->clearance)->tr8_issued_at->format('Y-m-d') : null,
 
                 // 🔹 creator info for Tabulator
                 'created_by_id'        => $r->created_by,

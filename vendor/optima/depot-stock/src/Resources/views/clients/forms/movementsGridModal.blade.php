@@ -4,6 +4,7 @@
   $u = auth()->user();
   $roleNames = $u?->roles?->pluck('name')->map(fn ($r) => strtolower($r))->all() ?? [];
   $isAdmin = in_array('admin', $roleNames) || in_array('owner', $roleNames) || in_array('superadmin', $roleNames);
+  $depotId = session('depot_id'); // Add depotId from session
 @endphp
 
 <div id="movementsModal" class="fixed inset-0 z-[140] hidden">
@@ -178,6 +179,7 @@
 <script>
 (function(){
   const IS_ADMIN = @json($isAdmin);
+  const DEPOT_ID = @json($depotId); // Expose depotId to JS
 
   // Routes
   const dataUrl = @json(route('depot.clients.movements.data', $client));
@@ -292,6 +294,33 @@
     return wrap;
   }
 
+  // Compliance formatter for Tabulator
+  function complianceFormatter(cell) {
+    const d = cell.getRow().getData();
+    // If clearance_id is present, compliance is met
+    if (d.clearance_id) {
+      const badge = document.createElement('span');
+      badge.className = 'inline-flex items-center gap-1 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200 px-2 py-0.5 text-xs font-semibold';
+      badge.textContent = 'Compliant';
+      badge.title = 'Linked to clearance #' + d.clearance_id;
+      return badge;
+    }
+    // If compliance_bypass_reason is present, show bypass badge
+    if (d.compliance_bypass_reason) {
+      const badge = document.createElement('span');
+      badge.className = 'inline-flex items-center gap-1 rounded-full bg-amber-100 text-amber-700 border border-amber-200 px-2 py-0.5 text-xs font-semibold';
+      badge.textContent = 'Bypassed';
+      badge.title = d.compliance_bypass_notes || 'Compliance bypassed';
+      return badge;
+    }
+    // Otherwise, show not compliant
+    const badge = document.createElement('span');
+    badge.className = 'inline-flex items-center gap-1 rounded-full bg-red-100 text-red-700 border border-red-200 px-2 py-0.5 text-xs font-semibold';
+    badge.textContent = 'Not compliant';
+    badge.title = 'No clearance or bypass reason';
+    return badge;
+  }
+
   // ===== Modal open/close =====
   document.addEventListener('click', e=>{
     const t = e.target.closest('[data-open-movements]');
@@ -318,13 +347,17 @@
     tabs.forEach(x=>x.classList.remove('active'));
     b.classList.add('active');
     currentKind = b.dataset.mvmKind;
-    refreshColumns(false);
-    loadData();
+    ensureTable(); // Rebuild table and columns for new kind
+    loadData();    // Reload data for new kind
   }));
 
   // ===== Table =====
   function ensureTable(){
-    if(table) return;
+    if(table){
+      table.destroy(); // Destroy previous instance to fully rebuild columns
+      table = null;
+      tableBuilt = false;
+    }
     table = new Tabulator('#mvmTable',{
       layout:'fitDataStretch',
       placeholder:'No rows.',
@@ -488,6 +521,48 @@
         editor: canEdit ? "input" : false,
         editable: cell => canEdit && !cell.getRow().getData().billed_invoice_id
       },
+      {title:"Compliance", field:"compliance_status", width:160, hozAlign:"center", headerSort:false,
+        formatter: complianceFormatter,
+        editor:false,
+        download:true,
+        clipboard:true,
+        accessorDownload: function(value, data){
+          let label = 'Not compliant';
+          let tooltip = 'No clearance or bypass reason';
+          if (data.clearance_id) {
+            label = 'Compliant';
+            tooltip = 'Linked to clearance #' + data.clearance_id;
+            if (data.clearance_tr8_number) {
+              tooltip += '\nTR8: ' + data.clearance_tr8_number;
+            }
+            if (data.clearance_tr8_issued_at) {
+              tooltip += '\nIssued: ' + data.clearance_tr8_issued_at;
+            }
+          } else if (data.compliance_bypass_reason) {
+            label = 'Bypassed';
+            tooltip = (data.compliance_bypass_reason ? data.compliance_bypass_reason + '\n' : '') + (data.compliance_bypass_notes || 'Compliance bypassed');
+          }
+          return label + (tooltip ? ' - ' + tooltip.replace(/\n/g, '; ') : '');
+        },
+        accessorClipboard: function(value, data){
+          let label = 'Not compliant';
+          let tooltip = 'No clearance or bypass reason';
+          if (data.clearance_id) {
+            label = 'Compliant';
+            tooltip = 'Linked to clearance #' + data.clearance_id;
+            if (data.clearance_tr8_number) {
+              tooltip += '\nTR8: ' + data.clearance_tr8_number;
+            }
+            if (data.clearance_tr8_issued_at) {
+              tooltip += '\nIssued: ' + data.clearance_tr8_issued_at;
+            }
+          } else if (data.compliance_bypass_reason) {
+            label = 'Bypassed';
+            tooltip = (data.compliance_bypass_reason ? data.compliance_bypass_reason + '\n' : '') + (data.compliance_bypass_notes || 'Compliance bypassed');
+          }
+          return label + (tooltip ? ' - ' + tooltip.replace(/\n/g, '; ') : '');
+        }
+      },
       {title:"Reference", field:"reference", width:160,
         editor: canEdit ? "input" : false,
         editable: cell => canEdit && !cell.getRow().getData().billed_invoice_id
@@ -500,8 +575,8 @@
   }
 
   function refreshColumns(initial=false){
-    if(initial){ return; }
     if(!tableBuilt){ return; }
+    // Always rebuild columns for each kind
     table.setColumns(buildColumns());
   }
 
@@ -515,6 +590,7 @@
     const elTo=document.getElementById('mvmTo');
     if(elFrom?.value) qs.set('from',elFrom.value);
     if(elTo?.value) qs.set('to',elTo.value);
+    if(DEPOT_ID) qs.set('depot_id', DEPOT_ID); // Add depot_id to query
 
     try{
       const res = await fetch(`${dataUrl}?${qs.toString()}`, { headers:{'Accept':'application/json'} });

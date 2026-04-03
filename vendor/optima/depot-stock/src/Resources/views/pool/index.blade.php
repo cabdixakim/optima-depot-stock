@@ -128,7 +128,12 @@
              transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
       <div class="flex items-center justify-between gap-2">
         <div>
-          <div class="text-[11px] uppercase tracking-wide text-emerald-700">Current Stock</div>
+          <div class="text-[11px] uppercase tracking-wide text-emerald-700 flex items-center gap-1">
+            Current Stock
+            <span class="ml-1 cursor-pointer" title="Includes all pool adjustments, corrections, and dips variance.">
+              <svg class="inline h-3 w-3 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><text x="12" y="16" text-anchor="middle" font-size="10" fill="currentColor">i</text></svg>
+            </span>
+          </div>
           <div class="mt-1 text-3xl font-semibold text-gray-900">
             {{ $fmtL($now) }} <span class="text-sm text-gray-500">L</span>
           </div>
@@ -157,7 +162,7 @@
         <span class="text-[11px] text-gray-500">{{ $label }}</span>
       </div>
       <div class="mt-1 text-2xl font-semibold text-gray-900">
-        {{ $fmtL($inAllowance + $posAllow) }} <span class="text-sm text-gray-500">L</span>
+        {{ $fmtL($inAllowance + $posAllow - $negAllow) }} <span class="text-sm text-gray-500">L</span>
       </div>
       <div class="mt-2 flex items-center gap-2 text-[11px] text-gray-600">
         <span class="px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
@@ -165,6 +170,12 @@
         </span>
         <span class="px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
           + Corr: {{ $fmtL($posAllow) }} L
+        </span>
+        <span class="px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-700">
+          - Corr: {{ $fmtL($negAllow) }} L
+          @if($negAllow > 0)
+            <span class="ml-1 px-1 py-0.5 rounded bg-rose-100 text-rose-700 font-semibold">Subtracted</span>
+          @endif
         </span>
       </div>
     </div>
@@ -217,7 +228,7 @@
             <span class="text-gray-300">•</span>
             <span>Out: {{ $fmtL($decTotal) }} L</span>
             <span class="text-gray-300">•</span>
-            <span>Net: <b class="{{ $netWindowL>=0?'text-emerald-700':'text-rose-700' }}">{{ $fmtL($netWindowL) }} L</b></span>
+            <span>    <b class="{{ $netWindowL>=0?'text-emerald-700':'text-rose-700' }}">{{ $fmtL($netWindowL) }} L</b></span>
           </div>
         </div>
       </div>
@@ -299,7 +310,7 @@
 </div>
 
 {{-- ========== TRANSFER MODAL ========== --}}
-<div id="transferModal" class="fixed inset-0 z-[120] hidden">
+<div id="transferModal" class="fixed inset-0 z-120 hidden">
   <button class="absolute inset-0 bg-black/40 backdrop-blur-sm" data-xfer-close></button>
   <div class="absolute inset-0 p-4 sm:p-8 grid place-items-center">
     <div id="transferModalPanel"
@@ -381,7 +392,7 @@
 </div>
 
 {{-- ========== SELL MODAL ========== --}}
-<div id="sellModal" class="fixed inset-0 z-[120] hidden">
+<div id="sellModal" class="fixed inset-0 z-120 hidden">
   <button class="absolute inset-0 bg-black/40 backdrop-blur-sm" data-sell-close></button>
   <div class="absolute inset-0 p-4 sm:p-8 grid place-items-center">
     <div id="sellModalPanel"
@@ -462,8 +473,8 @@
 </div>
 
 {{-- Toast --}}
-<div id="toast" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-[130] hidden">
-  <div class="rounded-xl bg-emerald-600 text-white px-4 py-2 text-sm shadow-lg min-w-[10rem] text-center
+<div id="toast" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-130 hidden">
+  <div class="rounded-xl bg-emerald-600 text-white px-4 py-2 text-sm shadow-lg min-w-40 text-center
               transform transition-all duration-200 translate-y-3 opacity-0">
     Saved.
   </div>

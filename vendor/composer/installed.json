@@ -3494,12 +3494,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/cabdixakim/Depot-stock-package.git",
-                "reference": "91978555300116d8274a4612fab50d2b359d4427"
+                "reference": "5d1327333a8280835791300c4af49c49f1e9319b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/cabdixakim/Depot-stock-package/zipball/91978555300116d8274a4612fab50d2b359d4427",
-                "reference": "91978555300116d8274a4612fab50d2b359d4427",
+                "url": "https://api.github.com/repos/cabdixakim/Depot-stock-package/zipball/5d1327333a8280835791300c4af49c49f1e9319b",
+                "reference": "5d1327333a8280835791300c4af49c49f1e9319b",
                 "shasum": ""
             },
             "require": {
@@ -3513,7 +3513,7 @@
             "require-dev": {
                 "orchestra/testbench": "^10.9"
             },
-            "time": "2026-02-12T01:24:50+00:00",
+            "time": "2026-03-09T19:04:39+00:00",
             "default-branch": true,
             "type": "library",
             "extra": {
